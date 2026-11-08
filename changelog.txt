@@ -1,0 +1,48 @@
+---------------------------------------------------------------------------------------------------
+Version: 1.0.3
+Date: 2026-11-04
+  Graphics:
+    - Main menu: the NOMAD logo now appears above the Factorio logo (and on the static menu background).
+  Changes:
+    - Fast Quality Buttons (https://mods.factorio.com/mod/fast-quality-buttons) is now an optional dependency.
+    - Starter ship: small tweaks (filter inserters for carbon).
+---------------------------------------------------------------------------------------------------
+Version: 1.0.2
+Date: 2026-11-04
+  Graphics:
+    - Floor extractor: the sprite now fills its full 3×3 area instead of looking 3×2.
+  Changes:
+    - Floor extractor can only be built on a deposit. Built elsewhere, it goes straight back into your inventory (or the robot's).
+    - Orbital cannon only bombards the planet its ship is orbiting (was: any planet, wherever the ship is). If the ship leaves orbit, the targets on that planet are dropped.
+  Bugfixes:
+    - Sandbox: after returning to the hub, the spacesuit button stayed on "Back to the hub" instead of switching back to "Leave the hub".
+---------------------------------------------------------------------------------------------------
+Version: 1.0.1
+Date: 2026-11-02
+  Changes:
+    - Quality Compressor (https://mods.factorio.com/mod/quality-compressor) is now an optional dependency: a predictable way to raise the quality of raw materials, also on your ship.
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 2026-11-02
+  Info:
+    - First public release (beta). Balancing is still being tuned, feedback welcome.
+  Features:
+    - Start on a small, working ship in orbit around Nauvis instead of crashing. Starter machines wait in the hub.
+    - The ship is your main base: labs only work in space. Grow it into a mothership without limits.
+    - Spacesuit: leave the hub and fly around your ship with a long reach.
+    - Supply capsule: a small early rocket that sends local resources up and carries you back to the ship.
+    - Recall beam: get back to your ship from a planet without a rocket.
+    - Ride a rocket with a full inventory.
+    - Research for bigger rocket payloads and faster thrusters. Cheaper foundation and thruster fuel.
+    - Robots, roboports, chests and furnaces allowed in space. The hub joins the logistic network and builds ghosts from the inventory of players on board.
+    - Floor extractor: special floors and infinite ship sources come from rare deposits on the planets, with a challenge on every planet (Vulcanus cooling, Gleba enemy waves, Fulgora scrap avalanche, Aquilo heat, Nauvis pollution). Deposit scanner included.
+    - Special floors: lava pool, bio soil (yumako and jellynut), ammonia pool, promethium floor.
+    - Infinite ship sources: scrap, tungsten, calcite, lithium, fluorine, crude oil, uranium.
+    - Large cargo bay.
+    - Orbital cannon: bombard any planet from your ship with orbital shells, cluster bombs and robot artillery shells.
+    - Lategame: promethium thruster, matter recombinator, jump drive and the final research "Nomad achieved" with its own victory screen.
+    - 12 achievements and a Nomad category in Tips and tricks.
+  Settings:
+    - Planet rules: A mining only (default), B everything allowed, C Space Age buildings only in space.
+    - Research cost (Nomad): multiplies the science cost of all Nomad research (0.1 to 10).
+    - Respawn on the mothership after dying on a planet.
