@@ -22,7 +22,7 @@ station.next_upgrade = nil
 station.surface_conditions = nil
 station.icons = {
   {icon = "__base__/graphics/icons/assembling-machine-2.png", icon_size = 64},
-  {icon = "__base__/graphics/icons/barrel.png", icon_size = 64, scale = 0.25, shift = {8, 8}}
+  {icon = "__base__/graphics/icons/fluid/barreling/empty-barrel.png", icon_size = 64, scale = 0.25, shift = {8, 8}}
 }
 station.icon = nil
 

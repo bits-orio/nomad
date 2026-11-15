@@ -116,7 +116,7 @@ function hardcore.tech_for(entity_name, prototype)
     if layer.shift then layer.shift = {layer.shift[1] * 4, layer.shift[2] * 4} end
     table.insert(icons, layer)
   end
-  table.insert(icons, {icon = "__space-age__/graphics/icons/nauvis.png", icon_size = 64, scale = 0.75, shift = {38, 38}})
+  table.insert(icons, {icon = "__base__/graphics/icons/nauvis.png", icon_size = 64, scale = 0.75, shift = {38, 38}})
 
   local entity_label = prototype.localised_name or {"entity-name." .. entity_name}
   data:extend({{

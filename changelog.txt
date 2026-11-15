@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.6
+Date: 2026-11-15
+  Bugfixes:
+    - Hardcore variant D: the game failed to load ("nauvis.png not found") because of two wrong icon paths.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.5
 Date: 2026-11-15
   Features:
