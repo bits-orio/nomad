@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.4
+Date: 2026-11-15
+  Changes:
+    - Captive biter spawner can now also be placed in space (all rule variants), so your ship can breed biter eggs itself. On planets it stays Nauvis-only like in Space Age. Careful: a starving spawner turns wild, on the ship too.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 2026-11-04
   Graphics:

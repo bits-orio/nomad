@@ -44,15 +44,66 @@ local function notify(player, entity, tech_name)
   player.print({"ncs-planet-rules.blocked", "[technology=" .. tech_name .. "]"})
 end
 
+-- Gebaeude, die zusaetzlich ins All duerfen (prototypes/space-also.lua): auf Planeten gelten ihre alten Bedingungen.
+local space_also_cache
+local function space_also()
+  if space_also_cache == nil then
+    local mod_data = prototypes.mod_data["ncs-space-also"]
+    space_also_cache = mod_data and mod_data.data.conditions or false
+  end
+  return space_also_cache
+end
+
+-- true, wenn das Gebaeude auf diesem Planeten nicht stehen darf
+local function space_also_blocked(entity)
+  local list = space_also()
+  if not list then return false end
+  local surface = entity.surface
+  if surface.platform or not surface.planet then return false end
+  local name = entity.type == "entity-ghost" and entity.ghost_name or entity.name
+  local conditions = list[name]
+  if not conditions then return false end
+  for _, condition in pairs(conditions) do
+    local value = surface.get_property(condition.property)
+    if (condition.min and value < condition.min) or (condition.max and value > condition.max) then return true end
+  end
+  return false
+end
+
+local function remove(event, entity, player)
+  if entity.type == "entity-ghost" then
+    entity.destroy()
+  elseif player and player.valid then
+    if not player.mine_entity(entity, true) and entity.valid then entity.destroy() end
+  elseif event.robot and event.robot.valid then
+    local cargo = event.robot.get_inventory(defines.inventory.robot_cargo)
+    if not entity.mine{inventory = cargo, force = true, ignore_minable = true} and entity.valid then entity.destroy() end
+  else
+    entity.destroy()
+  end
+end
+
 function planet_rules.on_built(event)
   local entity = event.entity
   if not (entity and entity.valid) then return end
   -- Nur Bauen durch Spieler und Roboter, nicht Skripte anderer Mods
   if not (event.player_index or event.robot) then return end
+  local player = event.player_index and game.get_player(event.player_index)
+
+  if space_also_blocked(entity) then
+    if player and player.valid then
+      local name = entity.type == "entity-ghost" and entity.ghost_name or entity.name
+      local text = {"ncs-planet-rules.space-also", "[entity=" .. name .. "]"}
+      player.create_local_flying_text{text = text, position = entity.position, create_at_cursor = true}
+      player.print(text)
+    end
+    remove(event, entity, player)
+    return
+  end
+
   local tech_name = blocking_tech(entity)
   if not tech_name then return end
 
-  local player = event.player_index and game.get_player(event.player_index)
   if entity.type == "entity-ghost" then
     notify(player, entity, tech_name)
     entity.destroy()
