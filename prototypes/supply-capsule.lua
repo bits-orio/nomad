@@ -179,7 +179,8 @@ data:extend(
   load_recipe("ncs-supply-capsule-load-gleba", 2,
   {
     {type = "item", name = "yumako", amount = 20},
-    {type = "item", name = "jellynut", amount = 20}
+    {type = "item", name = "jellynut", amount = 20},
+    {type = "item", name = "stone", amount = 10} -- seit 1.0.5 (Wunsch des Users): etwas Bergbau auf Gleba
   }),
   load_recipe("ncs-supply-capsule-load-fulgora", 2,
   {

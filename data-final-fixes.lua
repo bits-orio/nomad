@@ -8,6 +8,8 @@ require("prototypes.spacesuit-character")
 -- Regel-Varianten fuer Planeten (je nach Einstellung): A = nur Abbau, C = Space-Age-Gebaeude nur im All
 require("prototypes.variant-a")
 require("prototypes.variant-b")
+-- Variante D: Abfuellstation (braucht die Fass-Rezepte aus data-updates)
+require("prototypes.barrel-station")
 -- Gefangenes Beissernest auch im All (alle Varianten), nach den Varianten
 require("prototypes.space-also")
 

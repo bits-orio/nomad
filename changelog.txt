@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.5
+Date: 2026-11-15
+  Features:
+    - New planet rules variant D "Hardcore" (startup setting): until after Vulcanus, planets only allow mining, logistics, power, defense, trains, robots, supply capsule and rocket silo. No factories, no furnaces.
+    - Hardcore: every factory gets its own research "Planetary build: …" (after metallurgic science), from stone furnace (500) to cryogenic plant (20 000).
+    - Hardcore: barrel station, fills and empties barrels only, allowed on planets from the start so fluids can reach the ship.
+  Changes:
+    - Supply capsule on Gleba now also needs 10 stone per load (besides 20 yumako + 20 jellynut).
+---------------------------------------------------------------------------------------------------
 Version: 1.0.4
 Date: 2026-11-15
   Changes:

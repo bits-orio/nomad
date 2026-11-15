@@ -315,7 +315,9 @@ script.on_init(function()
   start_research.apply(game.forces.player)
   if remote.interfaces["freeplay"] then
     remote.call("freeplay", "set_disable_crashsite", true)
-    local intro = settings.startup["ncs-rules-variant"].value == "mining" and "ncs-message.intro-mining" or "ncs-message.intro"
+    local variant = settings.startup["ncs-rules-variant"].value
+    local intro = (variant == "mining" and "ncs-message.intro-mining") or (variant == "hardcore" and "ncs-message.intro-hardcore")
+      or "ncs-message.intro"
     remote.call("freeplay", "set_custom_intro_message", {intro})
   end
 end)

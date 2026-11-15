@@ -13,7 +13,11 @@
 --   (Die Kapselladung aus Rohstoffen gilt seit 1.21.0 in allen Varianten: prototypes/supply-capsule.lua.)
 -- Laeuft in data-final-fixes, damit alle Prototypen fertig sind.
 
-if settings.startup["ncs-rules-variant"].value ~= "mining" then return end
+-- Variante D "Hardcore" (seit 1.0.5) nutzt denselben Code: keine einfachen Fabriken ab Start, jedes Gebaeude mit
+-- eigener Forschung (prototypes/variant-d.lua).
+local variant = settings.startup["ncs-rules-variant"].value
+if variant ~= "mining" and variant ~= "hardcore" then return end
+local hardcore = variant == "hardcore" and require("prototypes.variant-d")
 
 local surface_util = require("prototypes.surface-util")
 local costs = require("prototypes.upgrade-costs")
@@ -117,6 +121,7 @@ local ALWAYS =
   ["stone-furnace"] = true, ["steel-furnace"] = true,
   ["chemical-plant"] = true, ["oil-refinery"] = true
 }
+if hardcore then ALWAYS = {} end
 -- Alle anderen Fabriken duerfen per Forschung auf Planeten: Grundspiel-Gebaeude mit "Planeten-Fabriken",
 -- Space-Age-Gebaeude erst spaet mit "Planeten-Industrie". Ob ein Gebaeude auf einer Oberflaeche stehen darf, laesst
 -- sich nicht an eine Forschung knuepfen; scripts/planet-rules.lua entfernt deshalb gesperrte Gebaeude beim Bauen.
@@ -131,8 +136,12 @@ for type_name, prototypes_of_type in pairs(data.raw) do
       if type(prototype) == "table" and placed[name] and prototype.type == type_name and prototype.collision_box
         and string.sub(name, 1, 4) ~= "ncs-" and from_vanilla(prototype) and not ALWAYS[name] then
         if on_some_planet(prototype.surface_conditions) and surface_util.allowed_in_space(prototype.surface_conditions) then
-          local base_game = string.sub(icon_path(prototype), 1, #"__base__/") == "__base__/"
-          gated[name] = base_game and TECH_BASE or TECH_SPACE_AGE
+          if hardcore then
+            gated[name] = hardcore.tech_for(name, prototype)
+          else
+            local base_game = string.sub(icon_path(prototype), 1, #"__base__/") == "__base__/"
+            gated[name] = base_game and TECH_BASE or TECH_SPACE_AGE
+          end
           table.insert(gated_log, name .. "=" .. gated[name])
         else
           table.insert(skipped, name) -- kann nur ins All oder nur auf Planeten, bleibt wie im Grundspiel
@@ -155,9 +164,10 @@ local factories_ingredients =
 local industry_unit = costs.unit("cryogenic-science-pack")
 industry_unit.count = 20000
 
+data:extend({{type = "mod-data", name = "ncs-planet-rules", data = {gated = gated}}})
+if not hardcore then
 data:extend(
 {
-  {type = "mod-data", name = "ncs-planet-rules", data = {gated = gated}},
   {
     type = "technology",
     name = TECH_BASE,
@@ -179,6 +189,7 @@ data:extend(
     order = "z[ncs]-p[planet-industry]"
   }
 })
+end
 
 ---------------------------------------------------------------------------
 -- 2. Planetengebundene Rezepte auch im All
