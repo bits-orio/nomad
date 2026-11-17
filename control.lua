@@ -26,6 +26,7 @@ local robot_shells = require("scripts.robot-shells")
 local achievements = require("scripts.achievements")
 local ending = require("scripts.ending")
 local start_fluids = require("scripts.start-fluids")
+local tungsten_drill = require("scripts.tungsten-drill")
 
 local SHIP_NAME = "Mutterschiff"
 local STARTER_PACK = "ncs-mothership-starter-pack"
@@ -274,6 +275,7 @@ local function init_storage()
   extractor.init()
   orbital_cannon.init()
   achievements.init()
+  tungsten_drill.init()
   storage.elevators = nil -- Weltraumaufzug in 1.24.0 entfernt
 end
 
@@ -337,6 +339,7 @@ script.on_configuration_changed(function()
   end
   suit.update_all()
   capacity.update_all()
+  tungsten_drill.update_all_drills()
 end)
 
 script.on_load(function()
@@ -395,7 +398,22 @@ local function merged(lists)
   return result
 end
 local BUILT_FILTER = merged({sources.FILTER, capacity.FILTER, planet_rules.FILTER, extractor.FILTER,
-  hub_supply.FILTER})
+  hub_supply.FILTER, tungsten_drill.FILTER})
+local PLATFORM_BUILT_FILTER = merged({sources.FILTER, tungsten_drill.FILTER})
+local SOURCE_MARKER = {}
+for _, filter in pairs(sources.FILTER) do SOURCE_MARKER[filter.name] = true end
+-- Elektrischer Bohrer auf Wolframerz: tauschen; nach einer Schiffs-Quelle die Bohrer darueber pruefen.
+-- Immer zuletzt, weil der Bohrer danach ersetzt sein kann.
+local function after_built(event)
+  local built = event.entity
+  if not (built and built.valid) then return end
+  if SOURCE_MARKER[built.name] then
+    local p = built.position
+    tungsten_drill.recheck_area(built.surface, {{p.x - 4, p.y - 4}, {p.x + 4, p.y + 4}})
+  else
+    tungsten_drill.on_built(event)
+  end
+end
 local REMOVED_FILTER = merged({sources.FILTER, extractor.FILTER})
 local function on_built(event)
   -- Zuerst die Planeten-Regel: Ein gesperrtes Gebaeude ist danach weg (entity ungueltig).
@@ -411,12 +429,16 @@ local function on_built(event)
   end
   extractor.on_built(event)
   hub_supply.on_built(event)
+  after_built(event)
 end
 local function on_removed(event)
   sources.on_removed(event)
   extractor.on_removed(event)
 end
-script.on_event(defines.events.on_space_platform_built_entity, sources.on_built, sources.FILTER)
+script.on_event(defines.events.on_space_platform_built_entity, function(event)
+  sources.on_built(event)
+  after_built(event)
+end, PLATFORM_BUILT_FILTER)
 script.on_event(defines.events.on_built_entity, on_built, BUILT_FILTER)
 script.on_event(defines.events.on_robot_built_entity, on_built, BUILT_FILTER)
 script.on_event(defines.events.script_raised_built, on_built, BUILT_FILTER)
@@ -475,6 +497,7 @@ script.on_nth_tick(60, function(event)
   extractor.update_all()
   achievements.count_ground() -- Zeit auf Planeten fuer "Nomade"
   start_fluids.update()
+  tungsten_drill.update_all() -- elektrische Bohrer auf Wolframerz nehmen Schaden
 end)
 
 -- Fuer Szenarien, andere Mods und Tests: Mutterschiff einer Force anlegen (falls noch keins existiert).

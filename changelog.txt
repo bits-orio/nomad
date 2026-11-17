@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.7
+Date: 2026-11-17
+  Features:
+    - New research "Tungsten with electric drills" (250 × red/green/blue, right after discovering Vulcanus): electric mining drills can then stand on tungsten ore. They mine it at a tenth of the speed and slowly take damage while working (about 20 minutes until they break, repair packs help). This breaks the loop "big mining drill needs tungsten, tungsten needs the big mining drill". Big mining drills are unchanged.
+  Changes:
+    - Tips and tricks: hint on how to get your first tungsten ore (electric drills after the research, or big volcanic rocks).
+---------------------------------------------------------------------------------------------------
 Version: 1.0.6
 Date: 2026-11-15
   Bugfixes:
