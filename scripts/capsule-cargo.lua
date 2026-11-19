@@ -6,6 +6,8 @@
 --      behaelt nur den Bedarf fuer KEEP_LOADS Ladungen, der Rest kommt in den Frachtraum der Rakete (die Traglast
 --      begrenzt, wie viel hineinpasst).
 
+local surface_planet = require("scripts.surface-planet")
+
 local capsule_cargo = {}
 
 local KEEP_LOADS = 2
@@ -20,8 +22,7 @@ local LOAD_BY_PLANET =
 local GENERIC_LOAD = "ncs-supply-capsule-load-generic"
 
 local function load_for(surface)
-  local planet = surface.planet
-  return planet and LOAD_BY_PLANET[planet.name] or GENERIC_LOAD
+  return LOAD_BY_PLANET[surface_planet.name(surface)] or GENERIC_LOAD
 end
 
 local function ensure_recipe(capsule)

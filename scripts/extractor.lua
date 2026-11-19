@@ -10,6 +10,7 @@
 
 local config = require("scripts.extractor-config")
 local achievements = require("scripts.achievements")
+local surface_planet = require("scripts.surface-planet")
 
 local extractor = {}
 
@@ -85,8 +86,7 @@ local function create_patch(surface, center, core)
 end
 
 local function generate(surface, area, chunk_position)
-  local planet = surface.planet
-  local cores = planet and BY_PLANET[planet.name]
+  local cores = BY_PLANET[surface_planet.name(surface)]
   if not cores then return end
   local distance = math.sqrt(chunk_position.x ^ 2 + chunk_position.y ^ 2)
   local chance = config.CHANCE * (1 + 2 * math.min(1, distance / config.FAR_CHUNKS))
@@ -110,7 +110,7 @@ local function chunk_radius(radius) return math.ceil(radius / 32) end
 
 local function register_guarantee(surface)
   if storage.core_guarantee[surface.index] then return end
-  if not (surface.planet and BY_PLANET[surface.planet.name]) then return end
+  if not BY_PLANET[surface_planet.name(surface)] then return end
   local radius = config.GUARANTEE.RADIUS
   storage.core_guarantee[surface.index] = {radius = radius}
   surface.request_to_generate_chunks({0, 0}, chunk_radius(radius))
@@ -151,7 +151,7 @@ local function process_guarantee(surface, state)
   if not area_generated(surface, state.radius) then return end
   local r = state.radius
   local missing = false
-  for _, core in pairs(BY_PLANET[surface.planet.name]) do
+  for _, core in pairs(BY_PLANET[surface_planet.name(surface)]) do
     local present = surface.count_entities_filtered{name = core.entity, area = {{-r, -r}, {r, r}}, limit = 1} > 0
     if not present and not place_guaranteed(surface, core, r) then missing = true end
   end
@@ -185,17 +185,30 @@ function extractor.on_chunk_generated(event)
   generate(event.surface, event.area, event.position)
 end
 
+-- Deposits on the chunks a surface already has
+local function scan_surface(surface)
+  storage.core_scanned[surface.index] = true
+  for chunk in surface.get_chunks() do
+    if surface.is_chunk_generated(chunk) then
+      generate(surface, chunk.area, chunk)
+    end
+  end
+end
+
+-- Another mod said which planet this surface stands for (scripts/surface-planet.lua). Chunks generated before that
+-- got no deposits, so go through them now.
+function extractor.on_surface_planet_set(surface)
+  if not BY_PLANET[surface_planet.name(surface)] then return end
+  register_guarantee(surface)
+  scan_surface(surface)
+end
+
 -- Fuer Karten, die schon vor dieser Version erzeugt waren: einmal alle erzeugten Chunks durchgehen.
 function extractor.scan_existing()
   for _, surface in pairs(game.surfaces) do
     register_guarantee(surface)
-    if surface.planet and BY_PLANET[surface.planet.name] and not storage.core_scanned[surface.index] then
-      storage.core_scanned[surface.index] = true
-      for chunk in surface.get_chunks() do
-        if surface.is_chunk_generated(chunk) then
-          generate(surface, chunk.area, chunk)
-        end
-      end
+    if BY_PLANET[surface_planet.name(surface)] and not storage.core_scanned[surface.index] then
+      scan_surface(surface)
     end
   end
 end
@@ -215,7 +228,7 @@ end
 
 function extractor.scan(player)
   local surface = player.surface
-  if surface.platform or not (surface.planet and BY_PLANET[surface.planet.name]) then
+  if surface.platform or not BY_PLANET[surface_planet.name(surface)] then
     player.print({"ncs-scanner.no-planet"})
     return
   end
@@ -229,7 +242,7 @@ function extractor.scan(player)
   end
 
   local closest
-  for _, kind in pairs(BY_PLANET[surface.planet.name]) do
+  for _, kind in pairs(BY_PLANET[surface_planet.name(surface)]) do
     local found = nearest[kind.entity]
     local label = {"", "[item=" .. kind.product .. "] ", {"item-name." .. kind.product}}
     if found then
@@ -350,8 +363,7 @@ local HEAT_ENTITY = NAME .. "-heat"
 local function ensure_heat_entity(entry)
   local entity = entry.entity
   if entry.heat_entity and entry.heat_entity.valid then return entry.heat_entity end
-  local planet = entity.surface.planet
-  if not (planet and planet.name == "aquilo") then return nil end
+  if surface_planet.name(entity.surface) ~= "aquilo" then return nil end
   local heat = entity.surface.create_entity{name = HEAT_ENTITY, position = entity.position, force = entity.force,
     create_build_effect_smoke = false}
   if heat then heat.destructible = false end

@@ -6,6 +6,8 @@
 --   Pruefung der Schiffe (Fundament, Spezialboeden, legendaere Items im Rekombinator). Jede Sekunde: Zeit auf Planeten
 --   zaehlen (fuer "Nomade", geprueft beim Erforschen von "Nomade vollendet", scripts/ending.lua).
 
+local surface_planet = require("scripts.surface-planet")
+
 local achievements = {}
 
 local PLANETS = {"nauvis", "vulcanus", "gleba", "fulgora", "aquilo"}
@@ -34,6 +36,12 @@ end
 local function done(force, name)
   local list = storage.ach_done and storage.ach_done[force.index]
   return list and list[name] or false
+end
+
+-- The force starts over (remote reset_force): forget what it had already done
+function achievements.reset_force(force)
+  if storage.ach_done then storage.ach_done[force.index] = nil end
+  if storage.ach_planets then storage.ach_planets[force.index] = nil end
 end
 
 function achievements.init()
@@ -65,7 +73,7 @@ end
 function achievements.on_extractor_done(entity, core, started)
   local force, surface = entity.force, entity.surface
   unlock_force(force, "ncs-first-extraction")
-  local planet = surface.planet and surface.planet.name
+  local planet = surface_planet.name(surface)
   if planet then
     local done = storage.ach_planets[force.index] or {}
     storage.ach_planets[force.index] = done

@@ -27,6 +27,7 @@ local achievements = require("scripts.achievements")
 local ending = require("scripts.ending")
 local start_fluids = require("scripts.start-fluids")
 local tungsten_drill = require("scripts.tungsten-drill")
+local surface_planet = require("scripts.surface-planet")
 
 local SHIP_NAME = "Mutterschiff"
 local STARTER_PACK = "ncs-mothership-starter-pack"
@@ -69,14 +70,18 @@ local function get_ship(force)
   return nil
 end
 
-local function create_ship(force)
-  local platform = force.create_space_platform{name = SHIP_NAME, planet = "nauvis", starter_pack = STARTER_PACK}
+-- planet_name: where the ship starts, default Nauvis. A force that has its own copy of Nauvis starts above that.
+local function create_ship(force, planet_name)
+  local platform = force.create_space_platform{name = SHIP_NAME, planet = planet_name or "nauvis",
+    starter_pack = STARTER_PACK}
   if not platform then
     log("[nomad] create_space_platform fehlgeschlagen fuer Force " .. force.name)
     return nil
   end
   platform.apply_starter_pack(true)
   storage.ships[force.index] = platform
+  -- A force created after the game started has not had the start research yet (no-op for one that has)
+  start_research.apply(force)
   return platform
 end
 
@@ -179,8 +184,15 @@ local function build_ship(platform)
   return true
 end
 
+-- The planet the player stands on, as the place for a new ship (nil on a platform or a surface without a planet)
+local function planet_under(player)
+  local surface = player.physical_surface
+  if not surface or surface.platform then return nil end
+  return surface.planet and surface.planet.name or nil
+end
+
 local function send_player_to_ship(player)
-  local platform = get_ship(player.force) or create_ship(player.force)
+  local platform = get_ship(player.force) or create_ship(player.force, planet_under(player))
   if not platform then return true end -- nichts mehr zu tun, Fehler steht im Log
   if not build_ship(platform) then return false end -- naechsten Tick nochmal versuchen
 
@@ -205,9 +217,16 @@ local function on_tick()
   end
 end
 
-local function on_player_created(event)
-  storage.pending_players[event.player_index] = true
+local function queue_player(player_index)
+  storage.pending_players[player_index] = true
   script.on_event(defines.events.on_tick, on_tick)
+end
+
+-- A mod that puts players on their force later than on_player_created switches this off (remote
+-- disable_auto_player_setup) and calls setup_player once the player is on the right force.
+local function on_player_created(event)
+  if storage.auto_player_setup_disabled then return end
+  queue_player(event.player_index)
 end
 
 -- Kapsel oder eine ihrer Traglast-Varianten (scripts/rocket-capacity.lua)
@@ -265,6 +284,7 @@ local function init_storage()
   storage.ships = storage.ships or {}
   storage.ship_built = storage.ship_built or {}
   storage.pending_players = storage.pending_players or {}
+  storage.surface_planet = storage.surface_planet or {}
   storage.capsule_blasts = storage.capsule_blasts or {}
   capacity.init()
   boost.init()
@@ -380,6 +400,7 @@ script.on_event(defines.events.on_gui_closed, function(event)
 end)
 script.on_event(defines.events.on_chunk_generated, extractor.on_chunk_generated)
 script.on_event(defines.events.on_surface_created, extractor.on_surface_created)
+script.on_event(defines.events.on_surface_deleted, surface_planet.on_surface_deleted)
 script.on_event({defines.events.on_player_selected_area, defines.events.on_player_alt_selected_area}, function(event)
   extractor.on_player_selected_area(event)      -- Fundstellen-Scanner
   orbital_cannon.on_player_selected_area(event) -- Orbital-Fernsteuerung
@@ -501,13 +522,49 @@ script.on_nth_tick(60, function(event)
 end)
 
 -- Fuer Szenarien, andere Mods und Tests: Mutterschiff einer Force anlegen (falls noch keins existiert).
+-- planet_name (optional): the planet a new ship starts above, default Nauvis.
 remote.add_interface("nomad",
 {
-  create_mothership = function(force_name)
+  create_mothership = function(force_name, planet_name)
     local force = game.forces[force_name or "player"]
-    local platform = get_ship(force) or create_ship(force)
+    local platform = get_ship(force) or create_ship(force, planet_name)
     if platform then build_ship(platform) end
     return platform
+  end,
+
+  -- For mods that run several forces, each with its own ship (team mods, scenarios). None of this is needed in a
+  -- normal game.
+  --
+  -- Nomad puts a new player on the ship of the force they have one tick after on_player_created. A mod that
+  -- assigns the force later calls this once (on_init is fine, also before Nomad's own on_init) ...
+  disable_auto_player_setup = function()
+    storage.auto_player_setup_disabled = true
+  end,
+  -- ... and then this, when the player is on their force: the player goes to the force's ship. A force without a
+  -- ship gets one, above the planet the player stands on (above Nauvis if they are not on a planet).
+  setup_player = function(player_index)
+    local player = game.get_player(player_index)
+    if not (player and player.valid) then return end
+    storage.pending_players = storage.pending_players or {}
+    queue_player(player_index)
+  end,
+  -- The force starts over (its players left, the force is reused): forget its ship and what it had achieved. The
+  -- ship itself is not touched; deleting it is up to the caller.
+  reset_force = function(force_name)
+    local force = game.forces[force_name]
+    if not force then return end
+    if storage.ships then storage.ships[force.index] = nil end
+    achievements.reset_force(force)
+    ending.reset_force(force)
+  end,
+  -- This surface stands for that planet: Nomad's per-planet rules (deposits, capsule load, achievements) treat
+  -- it like the planet named. For a force's own copy of a planet. See scripts/surface-planet.lua.
+  set_surface_planet = function(surface_index, planet_name)
+    local surface = game.get_surface(surface_index)
+    if not surface then return end
+    if surface_planet.set(surface_index, planet_name) and storage.core_scanned then
+      extractor.on_surface_planet_set(surface)
+    end
   end,
   -- Lauf eines Boden-Extraktors starten (wie der Knopf im Fenster). Gibt nil oder den Grund zurueck.
   start_extractor = function(entity)
