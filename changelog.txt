@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.8
+Date: 2026-11-20
+  Features:
+    - Remote calls for mods that give every team its own force and its own copies of the planets (for example Multi-Team Support): disable_auto_player_setup, setup_player, reset_force, set_surface_planet, and an optional planet for create_mothership. Contributed by bits-orio. Nothing changes in a normal game.
+  Changes:
+    - "Nomad achieved" now counts per force (chat message and achievement for each force). The victory screen still appears once per game.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.7
 Date: 2026-11-17
   Features:
